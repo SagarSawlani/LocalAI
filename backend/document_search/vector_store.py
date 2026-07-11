@@ -24,3 +24,14 @@ def add_chunk(vector, meta):
     vectors = np.vstack([vectors, vector])
     metadata.append(meta)
     save_store(vectors, metadata)
+
+def search(query_vector, top_k=5):
+    vectors, metadata = load_store()
+    if len(vectors) == 0:
+        return []
+    query_vector = np.array(query_vector)
+    sims = vectors @ query_vector / (
+        np.linalg.norm(vectors, axis=1) * np.linalg.norm(query_vector) + 1e-8
+    )
+    top_idx = np.argsort(sims)[::-1][:top_k]
+    return [{"score": float(sims[i]), **metadata[i]} for i in top_idx]
