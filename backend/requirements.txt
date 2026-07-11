@@ -1,6 +1,5 @@
-pdfplumber
+pypdf
 python-docx
 fastapi
 uvicorn
 requests
-pymupdf
