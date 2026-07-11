@@ -1,2 +1,6 @@
 pdfplumber
 python-docx
+fastapi
+uvicorn
+requests
+pymupdf

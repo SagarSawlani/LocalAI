@@ -15,3 +15,5 @@ def find_documents():
         for f in filenames:
             if os.path.splitext(f)[1].lower() in SUPPORTED_EXT:
                 yield os.path.join(dirpath, f)
+
+find_documents()
