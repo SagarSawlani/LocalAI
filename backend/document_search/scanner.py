@@ -1,6 +1,6 @@
 import os
 
-SCAN_ROOT = os.path.expanduser("/data/data/com.termux/files/home/storage/shared/local_test")
+SCAN_ROOT = "/storage/emulated/0/Download"
 
 EXCLUDE_DIRS = {
     "Android", ".thumbnails", ".cache", "cache",
@@ -16,4 +16,5 @@ def find_documents():
             if os.path.splitext(f)[1].lower() in SUPPORTED_EXT:
                 yield os.path.join(dirpath, f)
 
-print(list(find_documents()))
+if __name__ == "__main__":
+    print(list(find_documents()))

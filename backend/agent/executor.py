@@ -7,8 +7,8 @@ sys.path.append(str(Path(__file__).parent.parent / "tools"))
 
 from llm import get_intent
 from planner import plan
-from move import move_file
-from scan import scan_directory
+from tools.move import move_file
+from tools.scan import scan_directory
 
 
 def execute(natural_language_query: str, auto_confirm: bool = False):
