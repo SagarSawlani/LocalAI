@@ -3,7 +3,7 @@ import os
 SCAN_ROOT = "/storage/emulated/0"
 
 EXCLUDE_DIRS = {
-    "Android", ".thumbnails", ".cache", "cache",
+    ".thumbnails", ".cache", "cache",
     "node_modules", ".git", "LOST.DIR"
 }
 
