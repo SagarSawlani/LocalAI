@@ -16,4 +16,4 @@ def find_documents():
             if os.path.splitext(f)[1].lower() in SUPPORTED_EXT:
                 yield os.path.join(dirpath, f)
 
-print(find_documents())
+print(list(find_documents()))
