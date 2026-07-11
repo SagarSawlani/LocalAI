@@ -2,8 +2,10 @@ import numpy as np
 import json
 import os
 
-VEC_PATH = "data/doc_vectors.npy"
-META_PATH = "data/doc_metadata.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "..", "data")
+VEC_PATH = os.path.join(DATA_DIR, "doc_vectors.npy")
+META_PATH = os.path.join(DATA_DIR, "doc_metadata.json")
 
 def load_store():
     if os.path.exists(VEC_PATH):
@@ -15,7 +17,7 @@ def load_store():
     return vectors, metadata
 
 def save_store(vectors, metadata):
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
     np.save(VEC_PATH, vectors)
     json.dump(metadata, open(META_PATH, "w"))
 
