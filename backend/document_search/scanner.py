@@ -1,6 +1,6 @@
 import os
 
-SCAN_ROOT = os.path.expanduser("~/storage/shared/local_tets")
+SCAN_ROOT = os.path.expanduser("/storage/shared/local_tet")
 
 EXCLUDE_DIRS = {
     "Android", ".thumbnails", ".cache", "cache",
