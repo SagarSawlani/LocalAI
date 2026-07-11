@@ -27,17 +27,23 @@ def main():
         if not text.strip():
             print("  (no text extracted, skipping)")
             manifest[filepath] = file_signature(filepath)
+            save_manifest(manifest)   # <-- save immediately
             continue
 
         chunks = chunk_text(text)
+        print(f"  {len(chunks)} chunk(s) to process")
+        for i, chunk in enumerate(chunks):
+            print(f"    chunk {i+1}/{len(chunks)}: {chunk[:80]!r}")
+            vec = embed_document(chunk)
+            add_chunk(vec, {"path": filepath, "chunk_index": i, "text": chunk[:200]})
         for i, chunk in enumerate(chunks):
             vec = embed_document(chunk)
             add_chunk(vec, {"path": filepath, "chunk_index": i, "text": chunk[:200]})
         manifest[filepath] = file_signature(filepath)
+        save_manifest(manifest)   # <-- save immediately, after every file
         new_count += 1
         print(f"  indexed {len(chunks)} chunk(s)")
 
-    save_manifest(manifest)
     print(f"Done. Newly indexed: {new_count}, skipped (unchanged): {len(files) - new_count}")
 
 if __name__ == "__main__":
