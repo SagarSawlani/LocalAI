@@ -1,6 +1,6 @@
 import os
 
-SCAN_ROOT = os.path.expanduser("/data/data/com.termux/files/home/storage/shared/local_tets")
+SCAN_ROOT = os.path.expanduser("/data/data/com.termux/files/home/storage/shared/local_test")
 
 EXCLUDE_DIRS = {
     "Android", ".thumbnails", ".cache", "cache",
