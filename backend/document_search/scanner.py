@@ -1,6 +1,6 @@
 import os
 
-SCAN_ROOT = "/storage/emulated/0/Download"
+SCAN_ROOT = "/storage/emulated/0"
 
 EXCLUDE_DIRS = {
     "Android", ".thumbnails", ".cache", "cache",
