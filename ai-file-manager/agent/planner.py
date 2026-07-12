@@ -174,6 +174,18 @@ def plan(intent: dict):
             "dest": str(dest_resolved)
         }
 
+    elif tool == "search_documents":
+        query = intent.get("query")
+        if not query:
+            return {"status": "error", "reason": "Missing query in intent"}
+        return {"status": "ready", "tool": "search_documents", "query": query}
+
+    elif tool == "locate_file":
+        query = intent.get("query")
+        if not query:
+            return {"status": "error", "reason": "Missing query in intent"}
+        return {"status": "ready", "tool": "locate_file", "query": query}
+
     elif tool == "unknown" or tool == "error":
         return {"status": "error", "reason": intent.get("reason", "Unknown intent")}
 

@@ -11,6 +11,8 @@ from move import move_file
 from scan import scan_directory
 from rename import rename_file
 from storage_insights import storage_insights
+from search_documents import search_documents
+from locate_file import locate_file
 
 def execute(natural_language_query: str, auto_confirm: bool = False):
     intent = get_intent(natural_language_query)
@@ -78,6 +80,14 @@ def execute(natural_language_query: str, auto_confirm: bool = False):
 
         result = rename_file(plan_result["src"], plan_result["dest"], confirm=True)
         return {"status": "executed", "tool": "rename", "result": result}
+
+    elif tool == "locate_file":
+        result = locate_file(plan_result["query"])
+        return {"status": "executed", "tool": "locate_file", "result": result}
+
+    elif tool == "search_documents":
+        result = search_documents(plan_result["query"])
+        return {"status": "executed", "tool": "search_documents", "result": result}
 
     return {"status": "failed", "stage": "execution", "detail": "Unhandled tool"}
 

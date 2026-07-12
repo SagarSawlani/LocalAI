@@ -10,6 +10,8 @@ Available tools:
 - "scan": list contents of a directory. Requires "path".
 - "rename": rename a file/folder in place. Requires "src" (current path) and "new_name" (just the new filename, not a full path).
 - "insights": show a storage breakdown (categories, sizes, largest files) of a directory. Requires "path".
+- "search_documents": answer a question using the user's indexed documents. Requires "query".
+- "locate_file": find the location of a file by meaning/content. Requires "query".
 
 Respond with ONLY valid JSON, nothing else, in this exact format:
 {"tool": "move", "src": "<source path>", "dest": "<destination path>"}
