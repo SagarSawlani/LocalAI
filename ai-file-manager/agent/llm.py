@@ -21,6 +21,10 @@ or
 {"tool": "rename", "src": "<current path>", "new_name": "<new filename only>"}
 or
 {"tool": "insights", "path": "<directory path>"}
+or
+{"tool": "locate_file", "query": "<what to search for>"}
+or
+{"tool": "search_documents", "query": "<the user's question>"}
 
 If you cannot determine a clear command, respond with:
 {"tool": "unknown", "reason": "<why>"}
