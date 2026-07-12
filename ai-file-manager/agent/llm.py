@@ -40,7 +40,7 @@ def get_intent(user_query: str):
     }
 
     try:
-        response = requests.post(LLAMA_SERVER_URL, json=payload, timeout=60)
+        response = requests.post(LLAMA_SERVER_URL, json=payload, timeout=360)
         response.raise_for_status()
     except requests.RequestException as e:
         return {"tool": "error", "reason": f"Could not reach LLM server: {e}"}
