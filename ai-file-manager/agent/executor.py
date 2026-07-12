@@ -10,7 +10,7 @@ from planner import plan, resolve_dest
 from move import move_file
 from scan import scan_directory
 from rename import rename_file
-
+from storage_insights import storage_insights
 
 def execute(natural_language_query: str, auto_confirm: bool = False):
     intent = get_intent(natural_language_query)
@@ -61,6 +61,10 @@ def execute(natural_language_query: str, auto_confirm: bool = False):
     elif tool == "scan":
         result = scan_directory(plan_result["path"])
         return {"status": "executed", "tool": "scan", "result": result}
+
+    elif tool == "insights":
+        result = storage_insights(plan_result["path"])
+        return {"status": "executed", "tool": "insights", "result": result}
 
     elif tool == "rename":
         print(f"\nPlanned action: RENAME")

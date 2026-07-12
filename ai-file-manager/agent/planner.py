@@ -134,6 +134,19 @@ def plan(intent: dict):
             return {"status": "error", "reason": f"Ambiguous path '{path_raw}', matches: {resolved['ambiguous']}"}
 
         return {"status": "ready", "tool": "scan", "path": str(resolved)}
+     
+    elif tool == "insights":
+        path_raw = intent.get("path")
+        if not path_raw:
+            return {"status": "error", "reason": "Missing path in intent"}
+
+        resolved = resolve_path(path_raw)
+        if resolved is None:
+            return {"status": "error", "reason": f"Could not find path: {path_raw}"}
+        if isinstance(resolved, dict):
+            return {"status": "error", "reason": f"Ambiguous path '{path_raw}', matches: {resolved['ambiguous']}"}
+
+        return {"status": "ready", "tool": "insights", "path": str(resolved)} 
     elif tool == "rename":
         src_raw = intent.get("src")
         new_name = intent.get("new_name")
