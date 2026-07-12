@@ -43,18 +43,25 @@ def resolve_path_with_ambiguity(raw_path: str, choice_index: int = None):
         if candidate.exists():
             return candidate, None
 
-    name = Path(raw_path).name
     storage_root = Path("/storage/emulated/0")
-    if storage_root.exists():
-        matches = list(storage_root.rglob(name))
-        if len(matches) == 1:
-            return matches[0], None
-        elif len(matches) > 1:
-            if choice_index is not None and 0 <= choice_index < len(matches):
-                return matches[choice_index], None
-            return None, matches
+    name = Path(raw_path).name
 
-    # Exact match failed — fall back to semantic search
+    # Try exact match with the name as-is
+    matches = list(storage_root.rglob(name)) if storage_root.exists() else []
+
+    # If no extension was given, also try common document extensions
+    if not matches and not Path(name).suffix:
+        for ext in [".pdf", ".docx", ".txt"]:
+            matches.extend(storage_root.rglob(name + ext))
+
+    if len(matches) == 1:
+        return matches[0], None
+    elif len(matches) > 1:
+        if choice_index is not None and 0 <= choice_index < len(matches):
+            return matches[choice_index], None
+        return None, matches
+
+    # Exact match failed entirely — fall back to semantic search
     semantic_result = locate_file(raw_path, top_k=3)
     semantic_matches = semantic_result.get("results", [])
 
@@ -70,7 +77,6 @@ def resolve_path_with_ambiguity(raw_path: str, choice_index: int = None):
             return None, [m["path"] for m in good_matches]
 
     return None, None
-
 
 def resolve_dest(dest_raw: str):
     dest_resolved = Path(dest_raw).expanduser()
