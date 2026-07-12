@@ -11,29 +11,23 @@ from move import move_file
 from scan import scan_directory
 from rename import rename_file
 from storage_insights import storage_insights
-from search_documents import search_documents
 from locate_file import locate_file
+from search_documents import search_documents
 
-def execute(natural_language_query: str, auto_confirm: bool = False):
+def execute(natural_language_query: str, auto_confirm: bool = False, choice_index: int = None):
     intent = get_intent(natural_language_query)
     plan_result = plan(intent)
 
     if plan_result["status"] == "ambiguous":
-        print(f"\nMultiple files match. Which one did you mean?")
-        for i, m in enumerate(plan_result["matches"]):
-            print(f"  [{i}] {m}")
-        if auto_confirm:
-            return {"status": "cancelled", "detail": "Ambiguous match, cannot auto-confirm"}
-        choice = input("Enter number (or 'c' to cancel): ").strip()
-        if choice.lower() == "c":
-            return {"status": "cancelled", "detail": plan_result}
+        if choice_index is None:
+            # API-safe: return the choices instead of blocking on input()
+            return {"status": "needs_choice", "detail": plan_result}
+
         try:
-            idx = int(choice)
-            chosen_src = plan_result["matches"][idx]
-        except (ValueError, IndexError):
+            chosen_src = plan_result["matches"][choice_index]
+        except (IndexError, TypeError):
             return {"status": "cancelled", "detail": "Invalid selection"}
 
-        # Rebuild a resolved plan using the chosen path
         if plan_result["tool"] == "move":
             resolved_dest = resolve_dest(plan_result["dest"])
             plan_result = {"status": "ready", "tool": "move", "src": chosen_src, "dest": str(resolved_dest)}
@@ -48,17 +42,16 @@ def execute(natural_language_query: str, auto_confirm: bool = False):
     tool = plan_result["tool"]
 
     if tool == "move":
-        print(f"\nPlanned action: MOVE")
-        print(f"  from: {plan_result['src']}")
-        print(f"  to:   {plan_result['dest']}")
-
         if not auto_confirm:
-            answer = input("Proceed? (y/n): ").strip().lower()
-            if answer != "y":
-                return {"status": "cancelled", "detail": plan_result}
-
+            return {"status": "needs_confirmation", "tool": "move", "plan": plan_result}
         result = move_file(plan_result["src"], plan_result["dest"], confirm=True)
         return {"status": "executed", "tool": "move", "result": result}
+
+    elif tool == "rename":
+        if not auto_confirm:
+            return {"status": "needs_confirmation", "tool": "rename", "plan": plan_result}
+        result = rename_file(plan_result["src"], plan_result["dest"], confirm=True)
+        return {"status": "executed", "tool": "rename", "result": result}
 
     elif tool == "scan":
         result = scan_directory(plan_result["path"])
@@ -67,19 +60,6 @@ def execute(natural_language_query: str, auto_confirm: bool = False):
     elif tool == "insights":
         result = storage_insights(plan_result["path"])
         return {"status": "executed", "tool": "insights", "result": result}
-
-    elif tool == "rename":
-        print(f"\nPlanned action: RENAME")
-        print(f"  from: {plan_result['src']}")
-        print(f"  to:   {plan_result['dest']}")
-
-        if not auto_confirm:
-            answer = input("Proceed? (y/n): ").strip().lower()
-            if answer != "y":
-                return {"status": "cancelled", "detail": plan_result}
-
-        result = rename_file(plan_result["src"], plan_result["dest"], confirm=True)
-        return {"status": "executed", "tool": "rename", "result": result}
 
     elif tool == "locate_file":
         result = locate_file(plan_result["query"])
@@ -99,5 +79,24 @@ if __name__ == "__main__":
         sys.exit(1)
 
     result = execute(query)
+
+    # CLI-only: interactively handle needs_confirmation / needs_choice
+    if result["status"] == "needs_choice":
+        print("\nMultiple files match. Which one did you mean?")
+        for i, m in enumerate(result["detail"]["matches"]):
+            print(f"  [{i}] {m}")
+        choice = input("Enter number (or 'c' to cancel): ").strip()
+        if choice.lower() != "c":
+            result = execute(query, auto_confirm=True, choice_index=int(choice))
+
+    elif result["status"] == "needs_confirmation":
+        print(f"\nPlanned action: {result['tool'].upper()}")
+        print(json.dumps(result["plan"], indent=2))
+        answer = input("Proceed? (y/n): ").strip().lower()
+        if answer == "y":
+            result = execute(query, auto_confirm=True)
+        else:
+            result = {"status": "cancelled", "detail": result["plan"]}
+
     print("\n--- Result ---")
     print(json.dumps(result, indent=2, default=str))
