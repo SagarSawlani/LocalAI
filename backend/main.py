@@ -1,6 +1,12 @@
-from fastapi import FastAPI
+import sys
+import os
 
-from agent.routes import router as agent_router
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ai-file-manager")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ai-file-manager", "agent")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ai-file-manager", "tools")))
+
+from fastapi import FastAPI
+from routes import router as agent_router
 
 app = FastAPI()
 
