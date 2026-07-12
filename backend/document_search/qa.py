@@ -40,7 +40,7 @@ def answer_question(query: str, top_k: int = 5) -> dict:
     }
 
     try:
-        response = requests.post(LLAMA_SERVER_URL, json=payload, timeout=60)
+        response = requests.post(LLAMA_SERVER_URL, json=payload, timeout=360)
         response.raise_for_status()
     except requests.RequestException as e:
         return {"answer": f"Could not reach LLM server: {e}", "sources": []}
