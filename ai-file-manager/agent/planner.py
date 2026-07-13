@@ -2,7 +2,7 @@ from pathlib import Path
 import sys, os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tools")))
-from locate_file import locate_file
+from tools.locate_file import locate_file
 
 SEARCH_ROOTS = [
     Path("/storage/emulated/0"),
