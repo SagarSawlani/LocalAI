@@ -1,4 +1,4 @@
-# LocalAI File Manager
+# LPocketMind
 
 This repository hosts an AI-powered file manager capable of semantic document search, autonomous file organization, and natural language storage insights. The entire system is designed to run entirely locally on an Android device (OnePlus Nord 4) via Termux, leveraging local LLMs and embedding models for privacy and on-device execution.
 
