@@ -1,4 +1,4 @@
-Load LLM: ~/llama.cpp/build/bin/llama-server -m ~/models/Qwen3-4B-Instruct-2507-Q4_K_M.gguf -c 4096 --port 8080 --host 0.0.0.0
+Load LLM: ~/llama.cpp/build/bin/llama-server -m ~/models/qwen2.5-1.5b-instruct-q4_k_m.gguf -c 4096 --port 8080 --host 0.0.0.0
 Load Embedding Model: ~/llama.cpp/build/bin/llama-server -m ~/models/nomic-embed-text-v1.5.Q4_K_M.gguf --embedding --port 8081 --host 0.0.0.0 -c 8192 -b 8192 -ub 8192 --rope-scaling yarn --rope-freq-scale .75
 termux-wake-lock
 source venv/bin/activate
