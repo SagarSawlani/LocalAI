@@ -78,10 +78,24 @@ def resolve_path_with_ambiguity(raw_path: str, choice_index: int = None):
 
     return None, None
 
+KNOWN_FOLDERS = {
+    "downloads": "/storage/emulated/0/Download",
+    "download": "/storage/emulated/0/Download",
+    "documents": "/storage/emulated/0/Documents",
+    "pictures": "/storage/emulated/0/Pictures",
+    "dcim": "/storage/emulated/0/DCIM",
+    "movies": "/storage/emulated/0/Movies",
+    "music": "/storage/emulated/0/Music",
+}
+
 def resolve_dest(dest_raw: str):
     dest_resolved = Path(dest_raw).expanduser()
     if dest_resolved.is_absolute():
         return dest_resolved
+
+    lower = dest_raw.strip().lower()
+    if lower in KNOWN_FOLDERS:
+        return Path(KNOWN_FOLDERS[lower])
 
     for root in SEARCH_ROOTS:
         candidate = root / dest_raw
@@ -89,7 +103,6 @@ def resolve_dest(dest_raw: str):
             return candidate
 
     return Path("/storage/emulated/0") / dest_raw
-
 
 def plan(intent: dict):
     tool = intent.get("tool")
