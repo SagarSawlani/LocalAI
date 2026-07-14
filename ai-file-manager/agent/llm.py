@@ -14,6 +14,8 @@ Available tools:
 - "insights": show a storage breakdown (categories, sizes, largest files) of a directory. Requires "path" (just the folder name).
 - "search_documents": answer a question using the user's indexed documents. Requires "query".
 - "locate_file": find the location of a file by meaning/content. Requires "query".
+- "delete": permanently delete a file or folder. Requires "path". Use only when the user clearly asks to delete/remove something.
+- "find_duplicates": scan a directory for duplicate files by content. Requires "path".
 
 Respond with ONLY valid JSON, nothing else, in this exact format:
 {"tool": "move", "src": "Meeting Notes", "dest": "documents"}
@@ -27,6 +29,10 @@ or
 {"tool": "locate_file", "query": "what to search for"}
 or
 {"tool": "search_documents", "query": "the user's question"}
+or
+{"tool": "delete", "path": "<path to delete>"}
+or
+{"tool": "find_duplicates", "path": "<directory path>"}
 
 If you cannot determine a clear command, respond with:
 {"tool": "unknown", "reason": "<why>"}

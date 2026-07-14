@@ -13,6 +13,8 @@ from rename import rename_file
 from storage_insights import storage_insights
 from locate_file import locate_file
 from search_documents import search_documents
+from delete import delete_file
+from duplicate_detection import find_duplicates
 
 def execute(natural_language_query: str, auto_confirm: bool = False, choice_index: int = None):
     intent = get_intent(natural_language_query)
@@ -35,6 +37,8 @@ def execute(natural_language_query: str, auto_confirm: bool = False, choice_inde
             new_name = plan_result["new_name"]
             dest = str(Path(chosen_src).parent / new_name)
             plan_result = {"status": "ready", "tool": "rename", "src": chosen_src, "dest": dest}
+        elif plan_result["tool"] == "delete":
+            plan_result = {"status": "ready", "tool": "delete", "path": chosen_src}
 
     if plan_result["status"] != "ready":
         return {"status": "failed", "stage": "planning", "detail": plan_result}
@@ -68,6 +72,16 @@ def execute(natural_language_query: str, auto_confirm: bool = False, choice_inde
     elif tool == "search_documents":
         result = search_documents(plan_result["query"])
         return {"status": "executed", "tool": "search_documents", "result": result}
+
+    elif tool == "delete":
+        if not auto_confirm:
+            return {"status": "needs_confirmation", "tool": "delete", "plan": plan_result}
+        result = delete_file(plan_result["path"], confirm=True)
+        return {"status": "executed", "tool": "delete", "result": result}
+
+    elif tool == "find_duplicates":
+        result = find_duplicates(plan_result["path"])
+        return {"status": "executed", "tool": "find_duplicates", "result": result}
 
     return {"status": "failed", "stage": "execution", "detail": "Unhandled tool"}
 
@@ -107,7 +121,14 @@ if __name__ == "__main__":
         print(json.dumps(result["plan"], indent=2))
         answer = input("Proceed? (y/n): ").strip().lower()
         if answer == "y":
-            result = execute(query, auto_confirm=True)
+            if result["tool"] == "delete":
+                confirm_word = input("This cannot be undone. Type 'DELETE' to confirm: ").strip()
+                if confirm_word != "DELETE":
+                    result = {"status": "cancelled", "detail": "Confirmation phrase did not match"}
+                else:
+                    result = execute(query, auto_confirm=True)
+            else:
+                result = execute(query, auto_confirm=True)
         else:
             result = {"status": "cancelled", "detail": result["plan"]}
 

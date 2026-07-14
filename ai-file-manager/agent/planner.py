@@ -62,8 +62,12 @@ def resolve_path_with_ambiguity(raw_path: str, choice_index: int = None):
         return None, matches
 
     # Exact match failed entirely — fall back to semantic search
-    semantic_result = locate_file(raw_path, top_k=3)
-    semantic_matches = semantic_result.get("results", [])
+    try:
+    	semantic_result = locate_file(raw_path, top_k=3)
+    	semantic_matches = semantic_result.get("results", [])
+    except Exception as e:
+        # Embedding server may not be running — fail gracefully instead of crashing
+        semantic_matches = []
 
     if len(semantic_matches) == 1:
         return Path(semantic_matches[0]["path"]), None
@@ -159,6 +163,32 @@ def plan(intent: dict):
             return {"status": "error", "reason": f"Ambiguous path '{path_raw}', matches: {resolved['ambiguous']}"}
 
         return {"status": "ready", "tool": "insights", "path": str(resolved)}
+
+    elif tool == "delete":
+        path_raw = intent.get("path")
+        if not path_raw:
+            return {"status": "error", "reason": "Missing path in intent"}
+
+        resolved, ambiguous = resolve_path_with_ambiguity(path_raw)
+        if ambiguous:
+            return {"status": "ambiguous", "tool": "delete", "matches": [str(m) for m in ambiguous]}
+        if resolved is None:
+            return {"status": "error", "reason": f"Could not find path: {path_raw}"}
+
+        return {"status": "ready", "tool": "delete", "path": str(resolved)}
+
+    elif tool == "find_duplicates":
+        path_raw = intent.get("path")
+        if not path_raw:
+            return {"status": "error", "reason": "Missing path in intent"}
+
+        resolved = resolve_path(path_raw)
+        if resolved is None:
+            return {"status": "error", "reason": f"Could not find path: {path_raw}"}
+        if isinstance(resolved, dict):
+            return {"status": "error", "reason": f"Ambiguous path '{path_raw}', matches: {resolved['ambiguous']}"}
+
+        return {"status": "ready", "tool": "find_duplicates", "path": str(resolved)}
 
     elif tool == "rename":
         src_raw = intent.get("src")
