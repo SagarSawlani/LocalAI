@@ -50,3 +50,6 @@ def main():
         print(f"  indexed {len(chunks)} chunk(s)")
 
     print(f"Done. Newly indexed: {new_count}, skipped (unchanged): {len(files) - new_count}")
+
+if __name__ == "__main__":
+    main()
