@@ -16,6 +16,7 @@ Available tools:
 - "locate_file": find the location of a file by meaning/content. Requires "query".
 - "delete": permanently delete a file or folder. Requires "path". Use only when the user clearly asks to delete/remove something.
 - "find_duplicates": scan a directory for duplicate files by content. Requires "path".
+- "photo_search": search photos by semantic meaning. Requires "query".
 
 Respond with ONLY valid JSON, nothing else, in this exact format:
 {"tool": "move", "src": "Meeting Notes", "dest": "documents"}
@@ -31,6 +32,9 @@ or
 {"tool": "search_documents", "query": "the user's question"}
 or
 {"tool": "delete", "path": "<path to delete>"}
+or
+{"tool": "find_duplicates", "path": "<directory path>"}
+or
 or
 {"tool": "find_duplicates", "path": "<directory path>"}
 

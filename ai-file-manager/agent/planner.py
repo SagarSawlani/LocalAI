@@ -229,8 +229,26 @@ def plan(intent: dict):
             return {"status": "error", "reason": "Missing query in intent"}
         return {"status": "ready", "tool": "search_documents", "query": query}
 
+    elif tool == "photo_search":
+        query = intent.get("query")
+
+        if not query:
+            return {
+                "status": "error",
+                "reason": "Missing query in intent"
+            }
+
+        return {
+            "status": "ready",
+            "tool": "photo_search",
+            "query": query
+        }
+
     elif tool == "unknown" or tool == "error":
-        return {"status": "error", "reason": intent.get("reason", "Unknown intent")}
+        return {
+            "status": "error",
+            "reason": intent.get("reason", "Unknown intent")
+        }
 
     else:
         return {"status": "error", "reason": f"Unrecognized tool: {tool}"}

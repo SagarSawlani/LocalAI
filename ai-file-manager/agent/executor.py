@@ -15,6 +15,7 @@ from locate_file import locate_file
 from search_documents import search_documents
 from delete import delete_file
 from duplicate_detection import find_duplicates
+from photo_search import search_photos
 
 def execute(natural_language_query: str, auto_confirm: bool = False, choice_index: int = None):
     intent = get_intent(natural_language_query)
@@ -82,6 +83,10 @@ def execute(natural_language_query: str, auto_confirm: bool = False, choice_inde
     elif tool == "find_duplicates":
         result = find_duplicates(plan_result["path"])
         return {"status": "executed", "tool": "find_duplicates", "result": result}
+
+    elif tool == "photo_search":
+    	result = search_photos(plan_result["query"])
+    	return {"status": "executed","tool": "photo_search","result": result}
 
     return {"status": "failed", "stage": "execution", "detail": "Unhandled tool"}
 
