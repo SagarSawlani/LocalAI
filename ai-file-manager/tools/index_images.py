@@ -1,9 +1,9 @@
 import os
 import json
-import shutil
 import subprocess
 import hashlib
 from PIL import Image
+Image.MAX_IMAGE_PIXELS = None
 
 import sys
 SCAN_ROOT = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else "/storage/emulated/0"
@@ -11,6 +11,7 @@ IMAGE_EXT = {".jpg", ".jpeg", ".png"}
 RESIZED_DIR = os.path.expanduser("~/tmp_resized_images")
 CLIP_INDEX_DIR = os.path.expanduser("~/clip.cpp/build/")  # where images.paths/usearch live
 MANIFEST_PATH = os.path.expanduser("~/clip_manifest.json")
+MAPPING_PATH = os.path.expanduser("~/clip_mapping.json")
 CLIP_BUILD_BIN = os.path.expanduser("~/clip.cpp/build/bin/image-search-build")
 CLIP_MODEL = os.path.expanduser("~/clip.cpp/models/clip-vit-b32-q5_1.gguf")
 THREADS = "8"
@@ -31,9 +32,16 @@ def load_manifest():
         return json.load(open(MANIFEST_PATH))
     return {}
 
-
 def save_manifest(manifest):
     json.dump(manifest, open(MANIFEST_PATH, "w"))
+
+def load_mapping():
+    if os.path.exists(MAPPING_PATH):
+        return json.load(open(MAPPING_PATH))
+    return {}
+
+def save_mapping(mapping):
+    json.dump(mapping, open(MAPPING_PATH, "w"))
 
 
 def file_signature(filepath):
@@ -42,13 +50,11 @@ def file_signature(filepath):
 
 
 def main():
-    # Always start with a clean resized dir so stale copies don't pollute the index
-    if os.path.exists(RESIZED_DIR):
-        shutil.rmtree(RESIZED_DIR)
-    os.makedirs(RESIZED_DIR)
+    os.makedirs(RESIZED_DIR, exist_ok=True)
     os.makedirs(CLIP_INDEX_DIR, exist_ok=True)
 
     manifest = load_manifest()
+    mapping = load_mapping()
     images = list(find_images())
     total = len(images)
     print(f"Found {total} images")
@@ -61,37 +67,35 @@ def main():
 
     print(f"{len(to_process)} new/changed images to process, {total - len(to_process)} already done")
 
-    if not to_process:
-        print("Nothing new to index.")
-        return
-
-    # Resize each new image into RESIZED_DIR
+    # We only skip resizing if there are no new images, BUT we might still need to rebuild the index 
+    # if this script was run to just refresh the images.paths file.
+    
     resized_paths = []
-    for idx, (path, sig) in enumerate(to_process, 1):
-        try:
-            img = Image.open(path).convert("RGB")
-            img.thumbnail((512, 512))
-            out_name = hashlib.md5(path.encode()).hexdigest() + ".jpg"
-            out_path = os.path.join(RESIZED_DIR, out_name)
-            img.save(out_path, "JPEG", quality=85)
-            resized_paths.append(out_path)
-            manifest[path] = sig  # mark done once resized successfully
-        except Exception as e:
-            print(f"  [{idx}/{len(to_process)}] Failed on {path}: {e}")
+    if to_process:
+        for idx, (path, sig) in enumerate(to_process, 1):
+            try:
+                img = Image.open(path).convert("RGB")
+                img.thumbnail((512, 512))
+                out_name = hashlib.md5(path.encode()).hexdigest() + ".jpg"
+                out_path = os.path.join(RESIZED_DIR, out_name)
+                img.save(out_path, "JPEG", quality=85)
+                resized_paths.append(out_path)
+                
+                manifest[path] = sig  
+                mapping[out_path] = path  # Store the reverse mapping!
+            except Exception as e:
+                print(f"  [{idx}/{len(to_process)}] Failed on {path}: {e}")
 
-        if idx % 100 == 0:
-            print(f"  Resized {idx}/{len(to_process)}")
-            save_manifest(manifest)  # incremental save for crash safety
+            if idx % 100 == 0:
+                print(f"  Resized {idx}/{len(to_process)}")
+                save_manifest(manifest)
+                save_mapping(mapping)
 
-    save_manifest(manifest)
-    print(f"Resized {len(resized_paths)} images into {RESIZED_DIR}")
+        save_manifest(manifest)
+        save_mapping(mapping)
+        print(f"Resized {len(resized_paths)} images into {RESIZED_DIR}")
 
-    if not resized_paths:
-        print("No images were resized successfully, skipping indexing.")
-        return
-
-    # Run CLIP indexer — MUST run with cwd=CLIP_INDEX_DIR so images.paths and
-    # images.usearch are saved where image-search and photo_search.py can find them
+    # Run CLIP indexer — MUST run with cwd=CLIP_INDEX_DIR
     print("Running image-search-build...")
     result = subprocess.run(
         [CLIP_BUILD_BIN, "-m", CLIP_MODEL, "-t", THREADS, RESIZED_DIR],
@@ -100,10 +104,26 @@ def main():
 
     if result.returncode != 0:
         print(f"ERROR: image-search-build failed with exit code {result.returncode}")
-    else:
-        print(f"Done! Index saved to: {CLIP_INDEX_DIR}")
-        print("You can now search photos from the app or with:")
-        print(f"  cd {CLIP_INDEX_DIR} && ./bin/image-search -m {CLIP_MODEL} -n 5 \"your query\"")
+        return
+
+    # REWRITE images.paths so that it contains the ORIGINAL paths, not the resized thumbnail paths
+    images_paths_file = os.path.join(CLIP_INDEX_DIR, "images.paths")
+    if os.path.exists(images_paths_file):
+        with open(images_paths_file, "r") as f:
+            lines = f.readlines()
+        
+        with open(images_paths_file, "w") as f:
+            for line in lines:
+                line = line.strip()
+                # If the line is a resized image path, replace it with the original path
+                if line in mapping:
+                    f.write(mapping[line] + "\n")
+                else:
+                    f.write(line + "\n")
+                    
+        print("Restored original image paths in the index.")
+    
+    print(f"Done! Index saved to: {CLIP_INDEX_DIR}")
 
 
 if __name__ == "__main__":
