@@ -1,4 +1,5 @@
 import sys, os
+from collections import Counter
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from scanner import find_documents
@@ -15,7 +16,10 @@ def main():
     manifest = load_manifest()
     files = list(find_documents())
     total = len(files)
-    print(f"Found {total} files")
+    ext_counts = Counter(os.path.splitext(f)[1].lower() for f in files)
+    print(f"Found {total} files:")
+    for ext, count in sorted(ext_counts.items()):
+        print(f"  {ext}: {count}")
 
     new_count = 0
     for idx, filepath in enumerate(files, 1):
