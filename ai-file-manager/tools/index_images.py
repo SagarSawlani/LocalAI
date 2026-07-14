@@ -5,7 +5,8 @@ import subprocess
 import hashlib
 from PIL import Image
 
-SCAN_ROOT = "/storage/emulated/0"
+import sys
+SCAN_ROOT = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else "/storage/emulated/0"
 IMAGE_EXT = {".jpg", ".jpeg", ".png"}
 RESIZED_DIR = os.path.expanduser("~/tmp_resized_images")
 CLIP_INDEX_DIR = os.path.expanduser("~/clip.cpp/build/")  # where images.paths/usearch live
