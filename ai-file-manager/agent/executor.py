@@ -71,6 +71,19 @@ def execute(natural_language_query: str, auto_confirm: bool = False, choice_inde
 
     return {"status": "failed", "stage": "execution", "detail": "Unhandled tool"}
 
+def execute_plan(plan_result: dict):
+    """Execute an already-resolved plan directly, skipping LLM parsing entirely."""
+    tool = plan_result["tool"]
+
+    if tool == "move":
+        result = move_file(plan_result["src"], plan_result["dest"], confirm=True)
+        return {"status": "executed", "tool": "move", "result": result}
+
+    elif tool == "rename":
+        result = rename_file(plan_result["src"], plan_result["dest"], confirm=True)
+        return {"status": "executed", "tool": "rename", "result": result}
+
+    return {"status": "failed", "stage": "execution", "detail": "Unhandled tool"}
 
 if __name__ == "__main__":
     query = " ".join(sys.argv[1:])
