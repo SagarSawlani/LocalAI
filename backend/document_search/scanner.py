@@ -7,7 +7,7 @@ EXCLUDE_DIRS = {
     "node_modules", ".git", "LOST.DIR"
 }
 
-SUPPORTED_EXT = {".pdf", ".docx", ".txt"}
+SUPPORTED_EXT = {".pdf", ".docx", ".txt", ".mp3", ".m4a", ".opus", ".wav"}
 
 def find_documents():
     for dirpath, dirnames, filenames in os.walk(SCAN_ROOT):
