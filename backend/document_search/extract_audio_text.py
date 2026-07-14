@@ -22,11 +22,13 @@ def extract_transcript(audio_path: str) -> str:
         ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
         # 2. Run whisper-cli
+        # -l auto tells whisper to auto-detect the language (e.g. Hindi)
         # -otxt tells whisper to generate an 'audio.wav.txt' file with the transcript
         subprocess.run([
             WHISPER_BIN,
             "-m", MODEL_PATH,
             "-f", wav_path,
+            "-l", "auto",
             "-otxt"
         ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
