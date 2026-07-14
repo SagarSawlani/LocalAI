@@ -6,26 +6,37 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../b
 from embedder import embed_query
 from vector_store import search
 
-SEARCH_ROOT = Path("/storage/emulated/0")
+STORAGE_ROOT = Path("/storage/emulated/0")
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".pptx", ".xlsx", ".csv", ".md"}
+
+# Only scan these known document directories — avoids hanging on full phone scan
+DOCUMENT_ROOTS = [
+    STORAGE_ROOT / "Documents",
+    STORAGE_ROOT / "Downloads",
+    STORAGE_ROOT / "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents",
+    STORAGE_ROOT / "Telegram",
+    STORAGE_ROOT / "MyFiles",
+]
 
 
 def _filename_search(query: str, top_k: int = 5) -> list:
-    """Scan the filesystem for files whose names contain all query keywords."""
+    """Scan known document directories for files whose names contain query keywords."""
     keywords = [w.lower() for w in query.split() if len(w) > 2]
-    if not keywords or not SEARCH_ROOT.exists():
+    if not keywords:
         return []
 
     matches = []
-    for ext in SUPPORTED_EXTENSIONS:
-        for f in SEARCH_ROOT.rglob(f"*{ext}"):
+    for root in DOCUMENT_ROOTS:
+        if not root.exists():
+            continue
+        for f in root.rglob("*"):
+            if f.suffix.lower() not in SUPPORTED_EXTENSIONS:
+                continue
             name_lower = f.name.lower()
-            # Count how many keywords appear in the filename
             hits = sum(1 for kw in keywords if kw in name_lower)
             if hits > 0:
                 matches.append((hits, str(f)))
 
-    # Sort by number of keyword hits descending, return top_k
     matches.sort(key=lambda x: -x[0])
     return [{"path": path, "score": hits / len(keywords), "source": "filename"}
             for hits, path in matches[:top_k]]
