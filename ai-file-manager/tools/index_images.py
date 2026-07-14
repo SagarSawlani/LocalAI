@@ -1,3 +1,4 @@
+# ~/LocalAI/ai-file-manager/tools/index_images.py
 import os
 import json
 import subprocess

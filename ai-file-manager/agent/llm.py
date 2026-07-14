@@ -12,11 +12,11 @@ Available tools:
 - "scan": list contents of a directory. Requires "path" (just the folder name).
 - "rename": rename a file/folder in place. Requires "src" (just the current filename) and "new_name" (just the new filename).
 - "insights": show a storage breakdown (categories, sizes, largest files) of a directory. Requires "path" (just the folder name).
-- "search_documents": answer a question using the user's indexed documents. Requires "query".
-- "locate_file": find the location of a file by meaning/content. Requires "query".
+- "search_documents": answer a question or summarize content FROM the user's indexed documents (e.g. "what does X say about Y", "summarize my notes on Z"). Requires "query".
+- "locate_file": find WHERE a specific document file is stored (e.g. "find me X", "where is X", "locate X"). Use this when the user wants the FILE PATH, not an answer. DO NOT use for images/photos. Requires "query".
 - "delete": permanently delete a file or folder. Requires "path". Use only when the user clearly asks to delete/remove something.
 - "find_duplicates": scan a directory for duplicate files by content. Requires "path".
-- "photo_search": search photos by semantic meaning. Requires "query".
+- "photo_search": search for images and photos based on visual description (e.g. "laptop", "pizza"). MUST be used for ANY request looking for a photo. Requires "query".
 
 Respond with ONLY valid JSON, nothing else, in this exact format:
 {"tool": "move", "src": "Meeting Notes", "dest": "documents"}
@@ -35,8 +35,7 @@ or
 or
 {"tool": "find_duplicates", "path": "<directory path>"}
 or
-or
-{"tool": "find_duplicates", "path": "<directory path>"}
+{"tool": "photo_search", "query": "a photo of a pizza"}
 
 If you cannot determine a clear command, respond with:
 {"tool": "unknown", "reason": "<why>"}
