@@ -35,7 +35,7 @@ def extract_transcript(audio_path: str) -> str:
         # 3. Read the resulting transcript
         txt_path = wav_path + ".txt"
         if os.path.exists(txt_path):
-            with open(txt_path, "r", encoding="utf-8") as f:
+            with open(txt_path, "r", encoding="utf-8", errors="ignore") as f:
                 # whisper sometimes includes [BLANK_AUDIO] tokens, you might want to filter them out
                 transcript = f.read().strip()
                 return transcript
