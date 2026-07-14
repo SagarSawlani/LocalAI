@@ -71,7 +71,16 @@ def execute(natural_language_query: str, auto_confirm: bool = False, choice_inde
         return {"status": "executed", "tool": "locate_file", "result": result}
 
     elif tool == "search_documents":
-        result = search_documents(plan_result["query"])
+        query = plan_result["query"]
+
+        # First try filename scan — if the user is looking for a specific file,
+        # return it immediately without running the expensive RAG pipeline.
+        filename_hits = locate_file(query)
+        if filename_hits.get("results"):
+            return {"status": "executed", "tool": "locate_file", "result": filename_hits}
+
+        # No filename match — fall back to full RAG content search
+        result = search_documents(query)
         return {"status": "executed", "tool": "search_documents", "result": result}
 
     elif tool == "delete":
