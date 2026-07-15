@@ -39,7 +39,9 @@ Chat LLM on port 8080:
 
 ```bash
 termux-wake-lock
-~/llama.cpp/build/bin/llama-server -m ~/models/qwen2.5-1.5b-instruct-q4_k_m.gguf -c 4096 -t 4 --port 8080 --host 0.0.0.0
+~/llama.cpp/build/bin/llama-server \
+  -m ~/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
+  -c 4096 --port 8080 --host 0.0.0.0 -t $(nproc)
 ```
 
 Embeddings on port 8081:
