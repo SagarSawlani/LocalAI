@@ -76,68 +76,59 @@ python ~/LocalAI/ai-file-manager/tools/index_images.py
 
 ## API Endpoints
 
-| Method | Route | Purpose |
-|---|---|---|
-| POST | `/agent/execute` | Natural language → file/search action |
-| POST | `/agent/execute-plan` | Run a confirmed plan |
-| GET | `/docs/search?query=` | Vector search (no LLM) |
-| GET | `/docs/ask?query=` | RAG answer |
-| GET | `/docs/ask/stream?query=` | Streaming RAG |
-| POST | `/docs/open?path=` | Open file via `termux-open` |
-| POST | `/audio/transcribe` | Upload audio → transcript |
+## How It Works (Under the Hood)
+
+PocketMind routes your requests through different local models and scripts depending on what you ask.
+
+### 1. AI Assistant Mode (File Management)
+When you ask the assistant to manage your files (e.g., "Find my resume and move it to Documents"), the flow is:
+1. **Flutter App** sends the text query to the **FastAPI Backend** (`/agent/execute`).
+2. **LLM Planner (`planner.py`)**: The backend forwards your request to the local **Qwen 2.5 (1.5B)** model running on port 8080.
+3. **Intent Parsing**: Qwen analyzes your text and selects the appropriate Python tool from `tools/` (e.g., `scan`, `move`, `locate_file`, `photo_search`).
+4. **Execution (`executor.py`)**: The backend runs the chosen Python tool on your phone's file system.
+5. **Confirmation**: If the tool is destructive (like `move` or `delete`), the backend pauses and sends a "Plan" back to Flutter asking for your approval.
+6. **Result**: Once executed, the result is sent back to Flutter and displayed as a chat bubble or file card.
+
+### 2. Search Phone Mode (Document Q&A / RAG)
+When you switch to "Search Phone" and ask a question (e.g., "What does my syllabus say about machine learning?"):
+1. **Embedding (`embedder.py`)**: The backend sends your query to the **Nomic Embed Text** model running on port 8081, which converts your question into a mathematical vector.
+2. **Vector Search (`vector_store.py`)**: FAISS (a local vector database) compares your query vector against all your indexed PDFs and documents to find the top 5 most relevant paragraphs.
+3. **Context Generation (`qa.py`)**: The retrieved paragraphs (along with their file paths) are combined into a prompt.
+4. **LLM Answering**: This massive prompt is sent to the **Qwen 2.5 (1.5B)** model, asking it to answer your question using *only* the provided paragraphs.
+5. **Streaming**: Qwen streams the answer token-by-token back to the Flutter app in real-time, appending the source file cards at the very end.
 
 ---
 
-## Examples
+## Action Flow Examples
 
-One input → output per feature.
+Here is exactly what happens when you run specific commands:
 
-**File scan**
+**Example 1: "Find a photo of a laptop"**
+* **Model Used:** CLIP (ViT-B/32)
+* **Tool Called:** `photo_search`
+* **What Happens:** The text "a laptop" is embedded by the local CLIP model into a vector. FAISS compares this text vector against the pre-computed vectors of all your photos in the DCIM folder. It returns the file paths of the closest visual matches to Flutter.
 
-`POST /agent/execute` → `{"query": "list files in downloads"}`
+**Example 2: "Rename DS question bank PT2 to DS_QB"**
+* **Model Used:** Qwen 2.5 (1.5B)
+* **Tool Called:** `rename`
+* **What Happens:** Qwen extracts the source and target filenames. `planner.py` tries to resolve "DS question bank PT2" to an exact file path. Since you didn't provide an extension, it falls back to a keyword search (`locate_file`) to find the exact PDF. It then returns a plan asking for your confirmation before executing the OS `os.rename()` command.
 
-→ `{"status": "executed", "tool": "scan", "result": [{"name": "report.pdf", "path": "/storage/emulated/0/Download/report.pdf", ...}]}`
-
-**Move file** (needs confirm)
-
-`{"query": "move Meeting Notes to documents"}` → `{"status": "needs_confirmation", "tool": "move", "plan": {...}}`
-
-`{"query": "...", "auto_confirm": true}` → `{"status": "executed", "tool": "move", "result": {"status": "success", ...}}`
-
-**Document Q&A**
-
-`GET /docs/ask?query=what does my resume say about experience`
-
-→ `{"answer": "...", "sources": [{"path": ".../resume.pdf", "score": 0.79}]}`
-
-**Find file**
-
-`POST /agent/execute` → `{"query": "find my resume"}`
-
-→ `{"status": "executed", "tool": "locate_file", "result": {"results": [{"path": ".../resume.pdf", "score": 1.0}]}}`
-
-**Photo search**
-
-`{"query": "find a photo of a laptop"}`
-
-→ `{"status": "executed", "tool": "photo_search", "result": [{"distance": 0.31, "path": ".../IMG_0042.jpg"}]}`
-
-**Voice**
-
-`POST /audio/transcribe` (upload `.m4a`)
-
-→ `{"status": "success", "transcript": "find my resume"}`
+**Example 3: "Scan my downloads folder"**
+* **Model Used:** Qwen 2.5 (1.5B)
+* **Tool Called:** `scan`
+* **What Happens:** Qwen detects the intent to list files and extracts the directory name "downloads". `planner.py` resolves "downloads" to `/storage/emulated/0/Download`. The `scan.py` tool runs an `os.scandir()`, pulling file sizes, types, and modified dates, and returns the list to Flutter to render as file cards.
 
 ---
 
-## Confirmation
+## Confirmation Rules
 
-| Action | Behavior |
+For safety, the `executor.py` enforces strict confirmation rules before touching your files:
+
+| Tool | Requires User Approval? |
 |---|---|
-| scan, insights, locate, search, photo_search, find_duplicates | Runs immediately |
-| move, rename | Returns `needs_confirmation` → resend with `auto_confirm: true` |
-| delete | Same; CLI also requires typing `DELETE` |
-| Ambiguous file | Returns `needs_choice` → resend with `choice_index` |
+| `scan`, `insights`, `locate_file`, `photo_search`, `find_duplicates` | **No** (Runs immediately) |
+| `move`, `rename` | **Yes** (Requires tapping "Confirm" in Flutter) |
+| `delete` | **Yes** (Requires manual confirmation to prevent accidental data loss) |
 
 ---
 
