@@ -63,12 +63,20 @@ def resolve_path_with_ambiguity(raw_path: str, choice_index: int = None):
 
     storage_root = Path("/storage/emulated/0")
     name = Path(raw_path).name
+    has_extension = bool(Path(name).suffix)
 
     # Try exact match with the name as-is
     matches = list(storage_root.rglob(name)) if storage_root.exists() else []
 
+    # If no exact match, try normalizing whitespace in name (handles double-space filenames)
+    if not matches:
+        import re
+        name_normalized = re.sub(r'\s+', ' ', name).strip()
+        if name_normalized != name:
+            matches = list(storage_root.rglob(name_normalized))
+
     # If no extension was given, also try common document extensions
-    if not matches and not Path(name).suffix:
+    if not matches and not has_extension:
         for ext in [".pdf", ".docx", ".txt"]:
             matches.extend(storage_root.rglob(name + ext))
 
@@ -79,12 +87,15 @@ def resolve_path_with_ambiguity(raw_path: str, choice_index: int = None):
             return matches[choice_index], None
         return None, matches
 
-    # Exact match failed entirely — fall back to semantic search
+    # Semantic search fallback — only for vague queries WITHOUT a file extension
+    # Never use keyword search when the user gave an exact filename (has extension)
+    if has_extension:
+        return None, None
+
     try:
-    	semantic_result = locate_file(raw_path, top_k=3)
-    	semantic_matches = semantic_result.get("results", [])
-    except Exception as e:
-        # Embedding server may not be running — fail gracefully instead of crashing
+        semantic_result = locate_file(raw_path, top_k=3)
+        semantic_matches = semantic_result.get("results", [])
+    except Exception:
         semantic_matches = []
 
     if len(semantic_matches) == 1:
