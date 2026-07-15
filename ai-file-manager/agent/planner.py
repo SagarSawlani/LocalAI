@@ -8,12 +8,30 @@ SEARCH_ROOTS = [
     Path("/storage/emulated/0"),
 ]
 
+KNOWN_FOLDERS = {
+    "downloads": "/storage/emulated/0/Download",
+    "download": "/storage/emulated/0/Download",
+    "documents": "/storage/emulated/0/Documents",
+    "pictures": "/storage/emulated/0/Pictures",
+    "dcim": "/storage/emulated/0/DCIM",
+    "movies": "/storage/emulated/0/Movies",
+    "music": "/storage/emulated/0/Music",
+    "whatsapp": "/storage/emulated/0/Android/media/com.whatsapp/WhatsApp",
+}
+
 
 def resolve_path(raw_path: str):
     p = Path(raw_path).expanduser()
 
     if p.is_absolute() and p.exists():
         return p
+
+    # Check known folder aliases first (downloads, dcim, etc.)
+    lower = raw_path.strip().lower()
+    if lower in KNOWN_FOLDERS:
+        known = Path(KNOWN_FOLDERS[lower])
+        if known.exists():
+            return known
 
     for root in SEARCH_ROOTS:
         candidate = root / raw_path
@@ -81,16 +99,6 @@ def resolve_path_with_ambiguity(raw_path: str, choice_index: int = None):
             return None, [m["path"] for m in good_matches]
 
     return None, None
-
-KNOWN_FOLDERS = {
-    "downloads": "/storage/emulated/0/Download",
-    "download": "/storage/emulated/0/Download",
-    "documents": "/storage/emulated/0/Documents",
-    "pictures": "/storage/emulated/0/Pictures",
-    "dcim": "/storage/emulated/0/DCIM",
-    "movies": "/storage/emulated/0/Movies",
-    "music": "/storage/emulated/0/Music",
-}
 
 def resolve_dest(dest_raw: str):
     dest_resolved = Path(dest_raw).expanduser()
