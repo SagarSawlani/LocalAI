@@ -88,6 +88,11 @@ def answer_question_stream(query: str, top_k: int = 5):
                 delta = chunk["choices"][0]["delta"].get("content", "")
                 if delta:
                     yield delta
+                    
+    # Yield sources at the very end using a special delimiter
+    unique_paths = list(set([c["path"] for c in chunks]))
+    if unique_paths:
+        yield "\n\n__SOURCES__\n" + "\n".join(unique_paths)
 
 
 if __name__ == "__main__":
